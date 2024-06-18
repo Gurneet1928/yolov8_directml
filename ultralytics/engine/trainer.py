@@ -122,7 +122,7 @@ class BaseTrainer:
             print_args(vars(self.args))
 
         # Device
-        if self.device.type in {"cpu", "mps"}:
+        if self.device.type in {"cpu", "mps", "privateuseone"}:
             self.args.workers = 0  # faster CPU training as time dominated by inference, not dataloading
 
         # Model and Dataset
@@ -169,7 +169,7 @@ class BaseTrainer:
             world_size = len(self.args.device)
         elif torch.cuda.is_available():  # i.e. device=None or device='' or device=number
             world_size = 1  # default to device 0
-        else:  # i.e. device='cpu' or 'mps'
+        else:  # i.e. device='cpu' or 'mps' or "dml"
             world_size = 0
 
         # Run subprocess if DDP training, else train normally

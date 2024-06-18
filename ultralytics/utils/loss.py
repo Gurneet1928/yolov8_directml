@@ -1,5 +1,6 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -170,11 +171,16 @@ class v8DetectionLoss:
 
     def preprocess(self, targets, batch_size, scale_tensor):
         """Preprocesses the target counts and matches with the input batch size to output a tensor."""
-        if targets.shape[0] == 0:
+        if targets.shape[0] == 0 :
             out = torch.zeros(batch_size, 0, 5, device=self.device)
         else:
             i = targets[:, 0]  # image index
-            _, counts = i.unique(return_counts=True)
+            if targets.device.type == "privateuseone":
+                i = i.cpu().numpy()
+                _, counts = np.unique(i, return_counts=True)
+                counts = torch.as_tensor(counts, dtype=torch.int)
+            else:
+                _, counts = i.unique(return_counts=True) 
             counts = counts.to(dtype=torch.int32)
             out = torch.zeros(batch_size, counts.max(), 5, device=self.device)
             for j in range(batch_size):

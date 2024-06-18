@@ -15,6 +15,7 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
+import torch_directml
 
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -85,7 +86,7 @@ def select_device(device="", batch=0, newline=False, verbose=True):
 
     Args:
         device (str | torch.device, optional): Device string or torch.device object.
-            Options are 'None', 'cpu', or 'cuda', or '0' or '0,1,2,3'. Defaults to an empty string, which auto-selects
+            Options are 'None', 'cpu', 'cuda', 'dml', or '0' or '0,1,2,3'. Defaults to an empty string, which auto-selects
             the first available GPU, or CPU if no GPU is available.
         batch (int, optional): Batch size being used in your model. Defaults to 0.
         newline (bool, optional): If True, adds a newline at the end of the log string. Defaults to False.
@@ -105,12 +106,31 @@ def select_device(device="", batch=0, newline=False, verbose=True):
         >>> select_device('cpu')
         device(type='cpu')
 
+        >>> select_device('dml:0')
+        device(type="privateuseone", index=0)
+
     Note:
         Sets the 'CUDA_VISIBLE_DEVICES' environment variable for specifying which GPUs to use.
     """
 
     if isinstance(device, torch.device):
         return device
+
+    if "dml" in str(device).lower():
+        LOGGER.info(f"Ultralytics YOLOv{__version__} 🚀 Python-{PYTHON_VERSION} torch-{torch.__version__}+DirectML ")
+        LOGGER.info(f"DirectML device selected.")
+        default_device = 0      # Select Default Device at Index 0 incase of single device
+        if(torch_directml.device_count() > 1):          # Check for multiple devices
+            LOGGER.info("Multiple DirectML devices Available.")
+            if not str(device[-1]).isdigit():           # Check if Device Index provided
+                LOGGER.info("Please provide device index [ \"dml:{device_index}\" ]")
+            for i in range(torch_directml.device_count()):      # Display the DirectML device list
+                LOGGER.info(f"DirectML:{i} ({torch_directml.device_name(device_id=i)})")
+        if str(device[-1]).isdigit():            # Check if Device Index provided
+            default_device = int(device[-1])
+        LOGGER.info(f"Selecting device {torch_directml.device_name(device_id=default_device)}")
+        return torch_directml.device(device_id=default_device)
+    
 
     s = f"Ultralytics YOLOv{__version__} 🚀 Python-{PYTHON_VERSION} torch-{torch.__version__} "
     device = str(device).lower()

@@ -642,7 +642,7 @@ def check_amp(model):
         (bool): Returns True if the AMP functionality works correctly with YOLOv8 model, else False.
     """
     device = next(model.parameters()).device  # get model device
-    if device.type in {"cpu", "mps"}:
+    if device.type in {"cpu", "mps", "privateuseone"}:
         return False  # AMP only used on CUDA devices
 
     def amp_allclose(m, im):
