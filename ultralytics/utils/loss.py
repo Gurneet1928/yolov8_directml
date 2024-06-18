@@ -178,7 +178,7 @@ class v8DetectionLoss:
             if targets.device.type == "privateuseone":
                 i = i.cpu().numpy()
                 _, counts = np.unique(i, return_counts=True)
-                counts = torch.as_tensor(counts, dtype=torch.int)
+                counts = torch.as_tensor(counts, dtype=torch.int32)
             else:
                 _, counts = i.unique(return_counts=True) 
             counts = counts.to(dtype=torch.int32)
@@ -189,6 +189,10 @@ class v8DetectionLoss:
                 if n:
                     out[j, :n] = targets[matches, 1:]
             out[..., 1:5] = xywh2xyxy(out[..., 1:5].mul_(scale_tensor))
+
+        print(out.shape)
+        print(out.dtype)
+        print(out)
         return out
 
     def bbox_decode(self, anchor_points, pred_dist):
